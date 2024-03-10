@@ -24,10 +24,12 @@ def randomSecondGen(duration):
         .input(video)
         .trim(start=videoRandomSec, end=videoRandomSec+length)
         .output("edited-video.mp4")
+        .run()
     )
     edited_overlay = (
         ffmpeg
         .input(overlay)
         .trim(start=overlayRandomSec, end=overlayRandomSec+length)
         .output("edited-overlay.mp4")
+        .run()
     )   """   
