@@ -1,13 +1,17 @@
-import ffmpeg
+from moviepy.editor import *
 import sys
 import random
 
 video = sys.argv[1]
 overlay = sys.argv[2]
-length = int(sys.argv[3])
+duration = int(sys.argv[3])
 
-video_duration = ffmpeg.probe(video)['streams'][0]['duration']
-overlay_duration = ffmpeg.probe(overlay)['streams'][0]['duration']
+videoClip = VideoFileClip(f"video/{video}")
+videoClipDuration = videoClip.duration
+overlayClip = VideoFileClip(f"video/{overlay}")
+overlayClipDuration = overlayClip.duration
+
+videoClipSize = videoClip.size
 
 def randomSecondGen(duration):
     integerDuration = int(round(float(duration)))
@@ -16,21 +20,15 @@ def randomSecondGen(duration):
 
     return second
 
-if __name__ == "__main__":
-    videoRandomSec = randomSecondGen(video_duration)-length
-    overlayRandomSec = randomSecondGen(overlay_duration)-length
+videoClipRandomSec = randomSecondGen(videoClipDuration)-duration
+overlayClipRandomSec = randomSecondGen(overlayClipDuration)-duration
+trimmedVideoClip = videoClip.subclip(videoClipRandomSec, videoClipRandomSec+duration)
+trimmedOverlayClip = overlayClip.subclip(overlayClipRandomSec, overlayClipRandomSec+duration)
 
-    edited_video = (
-        ffmpeg
-        .input(video)
-        .trim(start=videoRandomSec, end=videoRandomSec+length, duration=length)
-        .output("edited-video.mp4")
-        .run()
-    )
-    edited_overlay = (
-        ffmpeg
-        .input(overlay)
-        .trim(start=overlayRandomSec, end=overlayRandomSec+length, duration=length)
-        .output("edited-overlay.mp4")
-        .run()
-    )
+editedVideoClip = trimmedVideoClip.without_audio()
+editedOverlayClip = trimmedOverlayClip.resize(width=videoClipSize[0], height=videoClipSize[1]/2)
+
+finalVideo = CompositeVideoClip([editedVideoClip, 
+                                editedOverlayClip.set_position(("center", "top"))])
+
+finalVideo.write_videofile('output.mp4',codec='libx264')
